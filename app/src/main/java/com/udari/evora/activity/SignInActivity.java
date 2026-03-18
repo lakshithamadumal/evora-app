@@ -10,11 +10,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.udari.evora.databinding.ActivitySignInBinding;
 
 public class SignInActivity extends AppCompatActivity {
 
     private ActivitySignInBinding binding;
+    private FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +25,7 @@ public class SignInActivity extends AppCompatActivity {
 
         binding = ActivitySignInBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        firebaseAuth = FirebaseAuth.getInstance();
 
         initUI();
     }
@@ -35,7 +38,17 @@ public class SignInActivity extends AppCompatActivity {
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "Signing In...", Toast.LENGTH_SHORT).show();
+                firebaseAuth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(this, task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(SignInActivity.this, "Login Successful!", Toast.LENGTH_SHORT).show();
+                                startActivity(new Intent(SignInActivity.this, MainActivity.class));
+                                finish();
+                            } else {
+                                String error = task.getException() != null ? task.getException().getMessage() : "Login Failed";
+                                Toast.makeText(SignInActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                            }
+                        });
             }
         });
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "88773613065",
+    "project_id": "evora-56499",
+    "storage_bucket": "evora-56499.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:88773613065:android:6cbda7fea386050a20cad8",
+        "android_client_info": {
+          "package_name": "com.udari.evora"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbmESeA8fh1xHycypT5Z7FXaRJmIw0ka0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
