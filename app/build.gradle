@@ -51,6 +51,8 @@ dependencies {
 
     implementation 'com.google.code.gson:gson:2.8.0'
 
+    implementation 'com.google.firebase:firebase-messaging'
+
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
