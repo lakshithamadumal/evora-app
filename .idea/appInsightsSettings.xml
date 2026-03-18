@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.udari.evora" />
+                  <option name="mobileSdkAppId" value="1:88773613065:android:6cbda7fea386050a20cad8" />
+                  <option name="projectId" value="evora-56499" />
+                  <option name="projectNumber" value="88773613065" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

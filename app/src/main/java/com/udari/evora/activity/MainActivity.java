@@ -3,7 +3,6 @@ package com.udari.evora.activity;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.fragment.app.Fragment;
@@ -31,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         if (savedInstanceState == null) {
-            replaceFragment(new HomeFragment());
+            replaceFragment(new HomeFragment(), true);
         }
 
         initNavigation();
@@ -47,10 +46,10 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
 
-            if (id == R.id.bottom_home) replaceFragment(new HomeFragment());
-            else if (id == R.id.bottom_cart) replaceFragment(new CartFragment());
-            else if (id == R.id.bottom_orders) replaceFragment(new OrdersFragment());
-            else if (id == R.id.bottom_profile) replaceFragment(new ProfileFragment());
+            if (id == R.id.bottom_home) replaceFragment(new HomeFragment(), true);
+            else if (id == R.id.bottom_cart) replaceFragment(new CartFragment(), true);
+            else if (id == R.id.bottom_orders) replaceFragment(new OrdersFragment(), true);
+            else if (id == R.id.bottom_profile) replaceFragment(new ProfileFragment(), true);
 
             return true;
         });
@@ -59,19 +58,15 @@ public class MainActivity extends AppCompatActivity {
             int id = item.getItemId();
 
             if (id == R.id.side_home) {
-                replaceFragment(new HomeFragment());
                 binding.bottomNavigation.setSelectedItemId(R.id.bottom_home);
             } else if (id == R.id.side_cart) {
-                replaceFragment(new CartFragment());
                 binding.bottomNavigation.setSelectedItemId(R.id.bottom_cart);
             } else if (id == R.id.side_orders) {
-                replaceFragment(new OrdersFragment());
                 binding.bottomNavigation.setSelectedItemId(R.id.bottom_orders);
             } else if (id == R.id.side_profile) {
-                replaceFragment(new ProfileFragment());
                 binding.bottomNavigation.setSelectedItemId(R.id.bottom_profile);
             } else if (id == R.id.side_settings) {
-                replaceFragment(new SettingsFragment());
+                replaceFragment(new SettingsFragment(), false);
             } else if (id == R.id.side_logout) {
                 Toast.makeText(this, "Logging out...", Toast.LENGTH_SHORT).show();
             }
@@ -80,7 +75,29 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        binding.btnNotification.setOnClickListener(v -> replaceFragment(new NotificationFragment()));
+        binding.btnNotification.setOnClickListener(v -> {
+            replaceFragment(new NotificationFragment(), false);
+        });
+    }
+
+    private void replaceFragment(Fragment fragment, boolean shouldKeepBottomNavHighlight) {
+
+        if (!shouldKeepBottomNavHighlight) {
+            binding.bottomNavigation.getMenu().setGroupCheckable(0, true, false);
+            for (int i = 0; i < binding.bottomNavigation.getMenu().size(); i++) {
+                binding.bottomNavigation.getMenu().getItem(i).setChecked(false);
+            }
+            binding.bottomNavigation.getMenu().setGroupCheckable(0, true, true);
+
+            if (binding.navView.getCheckedItem() != null) {
+                binding.navView.getCheckedItem().setChecked(false);
+            }
+        }
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, fragment);
+        fragmentTransaction.commit();
     }
 
     @Override
@@ -90,11 +107,5 @@ public class MainActivity extends AppCompatActivity {
         } else {
             super.onBackPressed();
         }
-    }
-    private void replaceFragment(Fragment fragment) {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, fragment);
-        fragmentTransaction.commit();
     }
 }
