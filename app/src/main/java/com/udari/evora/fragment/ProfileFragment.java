@@ -117,7 +117,7 @@ public class ProfileFragment extends Fragment {
                     JSONObject jsonObject = new JSONObject(responseData);
 
                     String finalUrl = jsonObject.getJSONObject("data").getString("url");
-                    uploadedImageUrl = finalUrl; 
+                    uploadedImageUrl = finalUrl;
 
                     requireActivity().runOnUiThread(() -> {
                         Glide.with(this).load(finalUrl).circleCrop().into(binding.profileImg);
