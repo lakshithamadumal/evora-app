@@ -123,7 +123,7 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
                 String city = documentSnapshot.getString("city");
 
                 if (isEmpty(name) || isEmpty(phone) || isEmpty(address) || isEmpty(city)) {
-                    Toast.makeText(getContext(), "Please complete your profile details (Name, Phone, Address, City) before checkout!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Please complete your profile details before checkout!", Toast.LENGTH_LONG).show();
                     binding.btnCheckout.setEnabled(true);
                 } else {
                     Toast.makeText(getContext(), "Payment Gateway Loading...", Toast.LENGTH_SHORT).show();
