@@ -1,6 +1,9 @@
 package com.udari.evora.activity;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -25,12 +29,17 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
 
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        View headerView = binding.navView.getHeaderView(0);
+        ImageView headerImg = headerView.findViewById(R.id.nav_header_img);
+        TextView headerName = headerView.findViewById(R.id.nav_header_name);
+        TextView headerEmail = headerView.findViewById(R.id.nav_header_email);
+
+        loadHeaderData(headerImg, headerName, headerEmail);
 
         if (savedInstanceState == null) {
             replaceFragment(new HomeFragment(), true);
@@ -127,6 +136,31 @@ public class MainActivity extends AppCompatActivity {
                 }).addOnFailureListener(e -> {
                 });
             });
+        }
+    }
+
+    private void loadHeaderData(ImageView img, TextView name, TextView email) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid != null) {
+            FirebaseFirestore.getInstance().collection("Users").document(uid)
+                    .addSnapshotListener((value, error) -> {
+                        if (value != null && value.exists()) {
+                            String userName = value.getString("name");
+                            String userEmail = value.getString("email");
+                            String userImg = value.getString("profilePicUrl");
+
+                            name.setText(userName != null ? userName : "User");
+                            email.setText(userEmail != null ? userEmail : "");
+
+                            if (userImg != null && !userImg.isEmpty()) {
+                                Glide.with(this)
+                                        .load(userImg)
+                                        .circleCrop()
+                                        .placeholder(R.drawable.profile)
+                                        .into(img);
+                            }
+                        }
+                    });
         }
     }
 }
