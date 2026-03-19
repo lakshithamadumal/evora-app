@@ -9,6 +9,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.udari.evora.R;
 import com.udari.evora.databinding.ActivityMainBinding;
 import com.udari.evora.fragment.CartFragment;
@@ -34,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         initNavigation();
+        updateFCMToken();
     }
 
     private void initNavigation() {
@@ -106,6 +110,23 @@ public class MainActivity extends AppCompatActivity {
             binding.drawerLayout.closeDrawer(GravityCompat.END);
         } else {
             super.onBackPressed();
+        }
+    }
+
+    private void updateFCMToken() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid != null) {
+            FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+                if (!task.isSuccessful()) {
+                    return;
+                }
+
+                String token = task.getResult();
+
+                FirebaseFirestore.getInstance().collection("Users").document(uid).update("fcmToken", token).addOnSuccessListener(aVoid -> {
+                }).addOnFailureListener(e -> {
+                });
+            });
         }
     }
 }

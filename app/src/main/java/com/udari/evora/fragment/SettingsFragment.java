@@ -1,66 +1,109 @@
 package com.udari.evora.fragment;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
-import com.udari.evora.R;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link SettingsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.google.firebase.auth.FirebaseAuth;
+import com.udari.evora.activity.SignInActivity;
+import com.udari.evora.databinding.FragmentSettingsBinding;
+
 public class SettingsFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private FragmentSettingsBinding binding;
+    private SharedPreferences sharedPreferences;
+    private static final String PREF_NAME = "AppPrefs";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public SettingsFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment SettingsFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static SettingsFragment newInstance(String param1, String param2) {
-        SettingsFragment fragment = new SettingsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    private ActivityResultLauncher<String> requestPermissionLauncher;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentSettingsBinding.inflate(inflater, container, false);
+        sharedPreferences = requireActivity().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (isGranted) {
+                Toast.makeText(getContext(), "Permission Granted!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Permission Denied!", Toast.LENGTH_SHORT).show();
+                loadSettings();
+            }
+        });
+
+        loadSettings();
+        setupListeners();
+
+        return binding.getRoot();
+    }
+
+    private void loadSettings() {
+        binding.switchCalls.setChecked(sharedPreferences.getBoolean("calls", false));
+        binding.switchNotifications.setChecked(sharedPreferences.getBoolean("notifications", false));
+        binding.switchGps.setChecked(sharedPreferences.getBoolean("gps", false));
+    }
+
+    private void setupListeners() {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        binding.switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                checkAndRequestPermission(Manifest.permission.POST_NOTIFICATIONS, "notifications", isChecked);
+            } else {
+                editor.putBoolean("notifications", isChecked).apply();
+            }
+        });
+
+        binding.switchGps.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                checkAndRequestPermission(Manifest.permission.ACCESS_FINE_LOCATION, "gps", isChecked);
+            } else {
+                editor.putBoolean("gps", isChecked).apply();
+            }
+        });
+
+        binding.switchCalls.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                checkAndRequestPermission(Manifest.permission.READ_PHONE_STATE, "calls", isChecked);
+            } else {
+                editor.putBoolean("calls", isChecked).apply();
+            }
+        });
+
+        binding.btnLogout.setOnClickListener(v -> logoutUser());
+    }
+
+    private void checkAndRequestPermission(String permission, String prefKey, boolean isChecked) {
+        if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_GRANTED) {
+            sharedPreferences.edit().putBoolean(prefKey, true).apply();
+        } else {
+            requestPermissionLauncher.launch(permission);
         }
     }
 
+    private void logoutUser() {
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(getActivity(), SignInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+    }
+
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_settings, container, false);
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }
