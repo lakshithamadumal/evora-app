@@ -57,7 +57,7 @@ public class SignUpActivity extends AppCompatActivity {
                                 .uid(uid)
                                 .name(name)
                                 .email(email)
-                                .profilePicUrl("https://i.ibb.co/Kx6Z9MkF/avatar.png")
+                                .profilePicUrl("")
                                 .phoneNumber("")
                                 .address("")
                                 .city("")
