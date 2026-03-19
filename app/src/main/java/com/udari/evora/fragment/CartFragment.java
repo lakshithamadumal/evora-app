@@ -1,66 +1,109 @@
 package com.udari.evora.fragment;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.udari.evora.adapter.CartAdapter;
+import com.udari.evora.databinding.FragmentCartBinding;
+import com.udari.evora.model.CartItem;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.udari.evora.R;
+public class CartFragment extends Fragment implements CartAdapter.OnCartActionListener {
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link CartFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class CartFragment extends Fragment {
+    private FragmentCartBinding binding;
+    private FirebaseFirestore db;
+    private CartAdapter adapter;
+    private List<CartItem> cartItemList;
+    private final double SHIPPING_FEE = 350.00;
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentCartBinding.inflate(inflater, container, false);
+        db = FirebaseFirestore.getInstance();
+        cartItemList = new ArrayList<>();
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+        setupRecyclerView();
+        loadCartItems();
 
-    public CartFragment() {
-        // Required empty public constructor
+        return binding.getRoot();
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment CartFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static CartFragment newInstance(String param1, String param2) {
-        CartFragment fragment = new CartFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    private void setupRecyclerView() {
+        adapter = new CartAdapter(cartItemList, this);
+        binding.rvCart.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.rvCart.setAdapter(adapter);
+    }
+
+    private void loadCartItems() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        db.collection("Users").document(uid).collection("Cart")
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) return;
+
+                    if (value != null) {
+                        cartItemList.clear();
+                        double subtotal = 0;
+
+                        for (DocumentSnapshot doc : value.getDocuments()) {
+                            CartItem item = doc.toObject(CartItem.class);
+                            if (item != null) {
+                                cartItemList.add(item);
+                                subtotal += item.getTotalPrice();
+                            }
+                        }
+                        adapter.notifyDataSetChanged();
+                        calculateBill(subtotal);
+                    }
+                });
+    }
+
+    private void calculateBill(double subtotal) {
+        double total = subtotal > 0 ? subtotal + SHIPPING_FEE : 0;
+
+        binding.tvSubtotal.setText("Rs. " + String.format("%.2f", subtotal));
+        binding.tvShipping.setText("Rs. " + String.format("%.2f", SHIPPING_FEE));
+        binding.tvTotal.setText("Rs. " + String.format("%.2f", total));
+
+        binding.btnCheckout.setEnabled(subtotal > 0);
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+    public void onQuantityChange(CartItem item, int newQty) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        double newTotalPrice = item.getUnitPrice() * newQty;
+
+        db.collection("Users").document(uid).collection("Cart")
+                .document(item.getProductId())
+                .update("quantity", newQty, "totalPrice", newTotalPrice);
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_cart, container, false);
+    public void onDeleteItem(CartItem item) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        db.collection("Users").document(uid).collection("Cart")
+                .document(item.getProductId())
+                .delete()
+                .addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Item removed", Toast.LENGTH_SHORT).show());
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }
