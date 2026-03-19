@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -27,7 +28,6 @@ public class SettingsFragment extends Fragment {
     private FragmentSettingsBinding binding;
     private SharedPreferences sharedPreferences;
     private static final String PREF_NAME = "AppPrefs";
-
     private ActivityResultLauncher<String> requestPermissionLauncher;
 
     @Override
@@ -81,6 +81,13 @@ public class SettingsFragment extends Fragment {
             } else {
                 editor.putBoolean("calls", isChecked).apply();
             }
+        });
+
+        binding.btnCallUs.setOnClickListener(v -> {
+            String phoneNumber = "0711099224";
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + phoneNumber));
+            startActivity(intent);
         });
 
         binding.btnLogout.setOnClickListener(v -> logoutUser());

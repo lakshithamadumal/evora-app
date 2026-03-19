@@ -34,6 +34,8 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
         setupRecyclerView();
         loadCartItems();
 
+        binding.btnCheckout.setOnClickListener(v -> checkUserProfileAndProceed());
+
         return binding.getRoot();
     }
 
@@ -105,5 +107,36 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    private void checkUserProfileAndProceed() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        binding.btnCheckout.setEnabled(false);
+
+        db.collection("Users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                String name = documentSnapshot.getString("name");
+                String phone = documentSnapshot.getString("phoneNumber");
+                String address = documentSnapshot.getString("address");
+                String city = documentSnapshot.getString("city");
+
+                if (isEmpty(name) || isEmpty(phone) || isEmpty(address) || isEmpty(city)) {
+                    Toast.makeText(getContext(), "Please complete your profile details (Name, Phone, Address, City) before checkout!", Toast.LENGTH_LONG).show();
+                    binding.btnCheckout.setEnabled(true);
+                } else {
+                    Toast.makeText(getContext(), "Payment Gateway Loading...", Toast.LENGTH_SHORT).show();
+                    /// To Payment
+                }
+            }
+        }).addOnFailureListener(e -> {
+            binding.btnCheckout.setEnabled(true);
+            Toast.makeText(getContext(), "Error checking profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private boolean isEmpty(String value) {
+        return value == null || value.trim().isEmpty();
     }
 }

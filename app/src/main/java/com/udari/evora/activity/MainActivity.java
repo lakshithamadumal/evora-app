@@ -1,5 +1,6 @@
 package com.udari.evora.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
                 replaceFragment(new SettingsFragment(), false);
             } else if (id == R.id.side_logout) {
                 Toast.makeText(this, "Logging out...", Toast.LENGTH_SHORT).show();
+                logoutUser();
             }
 
             binding.drawerLayout.closeDrawer(GravityCompat.END);
@@ -162,5 +164,18 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
         }
+    }
+
+    private void logoutUser() {
+        FirebaseAuth.getInstance().signOut();
+
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+
+        Intent intent = new Intent(MainActivity.this, com.udari.evora.activity.SignInActivity.class);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        startActivity(intent);
+        finish();
     }
 }
