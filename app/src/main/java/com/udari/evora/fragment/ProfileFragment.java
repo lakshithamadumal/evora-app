@@ -175,7 +175,6 @@ public class ProfileFragment extends Fragment {
         updates.put("address", binding.etProfileAddress.getText().toString());
 
         updates.put("profilePicUrl", uploadedImageUrl);
-
         FirebaseFirestore.getInstance().collection("Users").document(uid).update(updates).addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Profile Updated!", Toast.LENGTH_SHORT).show()).addOnFailureListener(e -> Toast.makeText(getContext(), "Update Failed!", Toast.LENGTH_SHORT).show());
     }
 

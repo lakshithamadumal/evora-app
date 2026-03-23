@@ -20,6 +20,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Evora">
         <activity
+            android:name=".activity.MapActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.ProductDetailsActivity"
             android:exported="false" />
         <activity
