@@ -57,6 +57,9 @@ dependencies {
 
     implementation "com.mapbox.search:mapbox-search-android-ui:2.0.0"
 
+    implementation 'com.github.PayHereDevs:payhere-android-sdk:v3.0.18'
+    implementation 'com.google.code.gson:gson:2.8.0'
+
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity

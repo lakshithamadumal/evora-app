@@ -1,24 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardPreventCornerOverlap="false"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="12dp">
 
         <ImageView
             android:id="@+id/product_img"
             android:layout_width="match_parent"
-            android:layout_height="140dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/placeholder" />
+            android:layout_height="160dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/placeholder"
+            android:importantForAccessibility="yes"
+            tools:src="@tools:sample/avatars"
+            app:shapeAppearanceOverlay="@style/RoundedImageView_Medium" />
 
         <TextView
             android:id="@+id/product_name"
@@ -27,16 +36,19 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="ÉVORA Blue Moon"
-            android:textColor="#333333"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp"
+            android:fontFamily="sans-serif-medium"
+            tools:text="ÉVORA Blue Moon" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:layout_marginTop="6dp">
 
             <TextView
                 android:id="@+id/product_price"
@@ -45,7 +57,11 @@
                 android:layout_weight="1"
                 android:text="Rs. 4,500"
                 android:textColor="?attr/colorPrimary"
-                android:textStyle="bold" />
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                tools:text="Rs. 4,500" />
+
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

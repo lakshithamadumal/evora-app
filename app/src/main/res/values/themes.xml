@@ -1,4 +1,5 @@
 <resources>
+
     <style name="Theme.Evora" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
@@ -46,5 +47,26 @@
         <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer</item>
         <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
         <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
+    </style>
+
+    <style name="RoundedImageView">
+        <item name="cornerSize">20dp</item>
+    </style>
+
+    <style name="CircleImageView">
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="RoundedBottomImage">
+        <item name="cornerSizeBottomLeft">40dp</item>
+        <item name="cornerSizeBottomRight">40dp</item>
+    </style>
+
+    <style name="RoundedImageView_Medium">
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="RoundedImageView_Small">
+        <item name="cornerSize">8dp</item>
     </style>
 </resources>

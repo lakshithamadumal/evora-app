@@ -4,6 +4,9 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="mapbox_access_token">pk.eyJ1IjoicHJhbW9kOTE4NCIsImEiOiJjbW12eXF4YnIwbWdhMnNwejVweGQ1ODR5In0.VypLwtDMmky5fa7kKF4Hyg</string>
+    <string name="discover_perfumes">Discover Perfumes</string>
+    <string name="banner_description">Promotional banner</string>
+
 
 </resources>
 

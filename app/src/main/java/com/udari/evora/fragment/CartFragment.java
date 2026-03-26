@@ -1,21 +1,38 @@
 package com.udari.evora.fragment;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 import com.udari.evora.adapter.CartAdapter;
 import com.udari.evora.databinding.FragmentCartBinding;
 import com.udari.evora.model.CartItem;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import lk.payhere.androidsdk.PHConstants;
+import lk.payhere.androidsdk.PHMainActivity;
+import lk.payhere.androidsdk.PHResponse;
+import lk.payhere.androidsdk.model.InitRequest;
+import lk.payhere.androidsdk.model.StatusResponse;
+import lk.payhere.androidsdk.PHConfigs;
 
 public class CartFragment extends Fragment implements CartAdapter.OnCartActionListener {
 
@@ -24,6 +41,10 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
     private CartAdapter adapter;
     private List<CartItem> cartItemList;
     private final double SHIPPING_FEE = 350.00;
+    private double currentTotal = 0;
+    private final int PAYHERE_REQUEST = 11001;
+
+    private String uName, uPhone, uAddress, uCity, uEmail;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -34,6 +55,7 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
         setupRecyclerView();
         loadCartItems();
 
+        // Checkout Button Click
         binding.btnCheckout.setOnClickListener(v -> checkUserProfileAndProceed());
 
         return binding.getRoot();
@@ -51,12 +73,10 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
 
         db.collection("Users").document(uid).collection("Cart")
                 .addSnapshotListener((value, error) -> {
-                    if (error != null) return;
-
+                    if (error != null || binding == null) return;
                     if (value != null) {
                         cartItemList.clear();
                         double subtotal = 0;
-
                         for (DocumentSnapshot doc : value.getDocuments()) {
                             CartItem item = doc.toObject(CartItem.class);
                             if (item != null) {
@@ -71,42 +91,11 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
     }
 
     private void calculateBill(double subtotal) {
-        double total = subtotal > 0 ? subtotal + SHIPPING_FEE : 0;
-
+        currentTotal = subtotal > 0 ? subtotal + SHIPPING_FEE : 0;
         binding.tvSubtotal.setText("Rs. " + String.format("%.2f", subtotal));
         binding.tvShipping.setText("Rs. " + String.format("%.2f", SHIPPING_FEE));
-        binding.tvTotal.setText("Rs. " + String.format("%.2f", total));
-
+        binding.tvTotal.setText("Rs. " + String.format("%.2f", currentTotal));
         binding.btnCheckout.setEnabled(subtotal > 0);
-    }
-
-    @Override
-    public void onQuantityChange(CartItem item, int newQty) {
-        String uid = FirebaseAuth.getInstance().getUid();
-        if (uid == null) return;
-
-        double newTotalPrice = item.getUnitPrice() * newQty;
-
-        db.collection("Users").document(uid).collection("Cart")
-                .document(item.getProductId())
-                .update("quantity", newQty, "totalPrice", newTotalPrice);
-    }
-
-    @Override
-    public void onDeleteItem(CartItem item) {
-        String uid = FirebaseAuth.getInstance().getUid();
-        if (uid == null) return;
-
-        db.collection("Users").document(uid).collection("Cart")
-                .document(item.getProductId())
-                .delete()
-                .addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Item removed", Toast.LENGTH_SHORT).show());
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
     }
 
     private void checkUserProfileAndProceed() {
@@ -115,28 +104,106 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
 
         binding.btnCheckout.setEnabled(false);
 
-        db.collection("Users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                String name = documentSnapshot.getString("name");
-                String phone = documentSnapshot.getString("phoneNumber");
-                String address = documentSnapshot.getString("address");
-                String city = documentSnapshot.getString("city");
+        db.collection("Users").document(uid).get().addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                uName = doc.getString("name");
+                uPhone = doc.getString("phoneNumber");
+                uAddress = doc.getString("address");
+                uCity = doc.getString("city");
+                uEmail = doc.getString("email");
 
-                if (isEmpty(name) || isEmpty(phone) || isEmpty(address) || isEmpty(city)) {
-                    Toast.makeText(getContext(), "Please complete your profile details before checkout!", Toast.LENGTH_LONG).show();
+                if (isEmpty(uName) || isEmpty(uPhone) || isEmpty(uAddress)) {
+                    Toast.makeText(getContext(), "Please complete your profile (Name, Phone, Address) first!", Toast.LENGTH_LONG).show();
                     binding.btnCheckout.setEnabled(true);
                 } else {
-                    Toast.makeText(getContext(), "Payment Gateway Loading...", Toast.LENGTH_SHORT).show();
-                    /// To Payment
+                    startPaymentGateway();
                 }
             }
-        }).addOnFailureListener(e -> {
-            binding.btnCheckout.setEnabled(true);
-            Toast.makeText(getContext(), "Error checking profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        });
+        }).addOnFailureListener(e -> binding.btnCheckout.setEnabled(true));
     }
 
-    private boolean isEmpty(String value) {
-        return value == null || value.trim().isEmpty();
+    private void startPaymentGateway() {
+        InitRequest req = new InitRequest();
+        req.setMerchantId("1226955");
+        req.setMerchantSecret("MzA1ODA3MDQ0MDM0NzQzMjM5NzUyNzk3MTU5Nzc5MTI4OTEwNjg1Ng==");
+        req.setCurrency("LKR");
+        req.setAmount(currentTotal);
+        req.setOrderId("ORD-" + System.currentTimeMillis());
+        req.setItemsDescription("Evora Product Order");
+        req.setSandBox(true);
+
+        req.getCustomer().setFirstName(uName);
+        req.getCustomer().setLastName("");
+        req.getCustomer().setEmail(uEmail != null ? uEmail : "customer@example.com");
+        req.getCustomer().setPhone(uPhone);
+        req.getCustomer().getAddress().setAddress(uAddress);
+        req.getCustomer().getAddress().setCity(uCity != null ? uCity : "Colombo");
+        req.getCustomer().getAddress().setCountry("Sri Lanka");
+
+        Intent intent = new Intent(getActivity(), PHMainActivity.class);
+        intent.putExtra(PHConstants.INTENT_EXTRA_DATA, req);
+        PHConfigs.setBaseUrl(PHConfigs.SANDBOX_URL);
+        startActivityForResult(intent, PAYHERE_REQUEST);
     }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        binding.btnCheckout.setEnabled(true);
+
+        if (requestCode == PAYHERE_REQUEST && data != null && data.hasExtra(PHConstants.INTENT_EXTRA_RESULT)) {
+            PHResponse<StatusResponse> response = (PHResponse<StatusResponse>) data.getSerializableExtra(PHConstants.INTENT_EXTRA_RESULT);
+            if (resultCode == Activity.RESULT_OK && response != null && response.isSuccess()) {
+                saveOrderToFirestore();
+            } else {
+                Toast.makeText(getContext(), "Payment Failed or Cancelled", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void saveOrderToFirestore() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        String orderId = "ORD-" + System.currentTimeMillis();
+
+        Map<String, Object> order = new HashMap<>();
+        order.put("orderId", orderId);
+        order.put("userId", uid);
+        order.put("customerName", uName);
+        order.put("customerPhone", uPhone);
+        order.put("deliveryAddress", uAddress);
+        order.put("deliveryCity", uCity);
+        order.put("totalAmount", currentTotal);
+        order.put("status", "Paid & Processing");
+        order.put("timestamp", FieldValue.serverTimestamp());
+        order.put("items", cartItemList);
+
+        WriteBatch batch = db.batch();
+
+        batch.set(db.collection("Orders").document(orderId), order);
+
+        for (CartItem item : cartItemList) {
+            batch.delete(db.collection("Users").document(uid).collection("Cart").document(item.getProductId()));
+            batch.update(db.collection("Products").document(item.getProductId()),
+                    "stockCount", FieldValue.increment(-item.getQuantity()));
+        }
+
+        batch.commit().addOnSuccessListener(aVoid -> {
+            Toast.makeText(getContext(), "Order Placed Successfully!", Toast.LENGTH_LONG).show();
+        }).addOnFailureListener(e -> Toast.makeText(getContext(), "Error saving order: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private boolean isEmpty(String value) { return value == null || value.trim().isEmpty(); }
+
+    @Override public void onQuantityChange(CartItem item, int newQty) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        db.collection("Users").document(uid).collection("Cart").document(item.getProductId())
+                .update("quantity", newQty, "totalPrice", (item.getUnitPrice() * newQty));
+    }
+
+    @Override public void onDeleteItem(CartItem item) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        db.collection("Users").document(uid).collection("Cart").document(item.getProductId()).delete();
+    }
+
+    @Override public void onDestroyView() { super.onDestroyView(); binding = null; }
 }
