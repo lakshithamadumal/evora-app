@@ -29,7 +29,6 @@ public class SettingsFragment extends Fragment {
     private SharedPreferences sharedPreferences;
     private static final String PREF_NAME = "AppPrefs";
 
-    // Permission Launchers
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private ActivityResultLauncher<String> callPermissionLauncher;
 
@@ -43,7 +42,7 @@ public class SettingsFragment extends Fragment {
                 Toast.makeText(getContext(), "Permission Granted!", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getContext(), "Permission Denied!", Toast.LENGTH_SHORT).show();
-                loadSettings(); // Switch එක ආපහු off කරන්න
+                loadSettings();
             }
         });
 
@@ -78,7 +77,6 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        // 2. GPS Switch
         binding.switchGps.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 checkAndRequestPermission(Manifest.permission.ACCESS_FINE_LOCATION, "gps", isChecked);
@@ -87,7 +85,6 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        // 3. Allow Calls Switch (Permission to read phone state)
         binding.switchCalls.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 checkAndRequestPermission(Manifest.permission.READ_PHONE_STATE, "calls", isChecked);
@@ -96,7 +93,6 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        // 4. Call Us Button - Auto Call
         binding.btnCallUs.setOnClickListener(v -> {
             if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
                 makeDirectCall();

@@ -35,10 +35,9 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private FirebaseFirestore db;
     private ProductAdapter adapter;
-    private List<Product> productList; // Adapter එකට දෙන ලිස්ට් එක
-    private List<Product> allProducts; // Original දත්ත ටික තියාගන්න ලිස්ට් එක
+    private List<Product> productList;
+    private List<Product> allProducts;
 
-    // 1. Notification Permission Launcher එක (Android 13+ සඳහා)
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (!isGranted) {
@@ -58,14 +57,13 @@ public class HomeFragment extends Fragment {
         loadProductsFromFirestore();
         setupSearch();
 
-        // 2. Notification Permission එක අහනවා
+
         askNotificationPermission();
 
-        // 3. Notification Icon එක Click කළාම NotificationFragment එකට යනවා
         binding.btnNotifications.setOnClickListener(v -> {
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new NotificationFragment())
-                    .addToBackStack(null) // Back button එක එබුවොත් ආයේ Home එකට එන්න
+                    .addToBackStack(null)
                     .commit();
         });
         askNotificationPermission();
@@ -102,7 +100,6 @@ public class HomeFragment extends Fragment {
                     Product product = doc.toObject(Product.class);
                     allProducts.add(product);
                 }
-                // මුලින්ම මුළු ලිස්ට් එකම පෙන්වනවා
                 filter("");
             }
         });
@@ -126,12 +123,10 @@ public class HomeFragment extends Fragment {
     private void filter(String text) {
         List<Product> filteredList = new ArrayList<>();
         for (Product item : allProducts) {
-            // Product title එක ඇතුළේ සර්ච් කරන අකුරු තියෙනවාද බලනවා
             if (item.getTitle().toLowerCase().contains(text.toLowerCase())) {
                 filteredList.add(item);
             }
         }
-        // UI එක update කිරීම
         productList.clear();
         productList.addAll(filteredList);
         adapter.notifyDataSetChanged();

@@ -90,9 +90,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-//        binding.btnNotification.setOnClickListener(v -> {
-//            replaceFragment(new NotificationFragment(), false);
-//        });
+
     }
 
     private void replaceFragment(Fragment fragment, boolean shouldKeepBottomNavHighlight) {
@@ -115,14 +113,6 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.commit();
     }
 
-//    @Override
-//    public void onBackPressed() {
-//        if (binding.drawerLayout.isDrawerOpen(GravityCompat.END)) {
-//            binding.drawerLayout.closeDrawer(GravityCompat.END);
-//        } else {
-//            super.onBackPressed();
-//        }
-//    }
 
     private void updateFCMToken() {
         String uid = FirebaseAuth.getInstance().getUid();

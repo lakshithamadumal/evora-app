@@ -18,6 +18,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
+import com.udari.evora.R;
 import com.udari.evora.adapter.CartAdapter;
 import com.udari.evora.databinding.FragmentCartBinding;
 import com.udari.evora.model.CartItem;
@@ -63,7 +64,6 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
         setupRecyclerView();
         loadCartItems();
 
-        // Checkout Button Click
         binding.btnCheckout.setOnClickListener(v -> checkUserProfileAndProceed());
 
         return binding.getRoot();
@@ -121,7 +121,7 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
                 uEmail = doc.getString("email");
 
                 if (isEmpty(uName) || isEmpty(uPhone) || isEmpty(uAddress)) {
-                    Toast.makeText(getContext(), "Please complete your profile (Name, Phone, Address) first!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Please complete your profile first!", Toast.LENGTH_LONG).show();
                     binding.btnCheckout.setEnabled(true);
                 } else {
                     startPaymentGateway();
@@ -198,7 +198,11 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
             if (isAdded()) {
                 Toast.makeText(requireContext(), "Order Placed Successfully!", Toast.LENGTH_LONG).show();
 
-                // --- තත්පර 3 ක Delay එක මෙතන ---
+                // Firestore එකට Notification එක සේව් කිරීම
+                saveNotificationToFirestore("Order Confirmed! 🎉",
+                        "Your order has been placed successfully. Thank you for shopping with ÉVORA!");
+
+                // තත්පර 3 කින් Local Notification එක පෙන්වීම
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     if (isAdded()) {
                         sendOrderConfirmationNotification();
@@ -207,9 +211,23 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
             }
         }).addOnFailureListener(e -> {
             if (isAdded()) {
-                Toast.makeText(requireContext(), "Error saving order: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void saveNotificationToFirestore(String title, String body) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        Map<String, Object> noti = new HashMap<>();
+        noti.put("title", title);
+        noti.put("body", body);
+        noti.put("timestamp", String.valueOf(System.currentTimeMillis()));
+        noti.put("userId", uid);
+        noti.put("read", false);
+
+        db.collection("Notifications").add(noti);
     }
 
     private void sendOrderConfirmationNotification() {
@@ -219,26 +237,19 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
         String channelId = "order_status_channel";
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        // Oreo (Android 8) සහ ඉහළ සඳහා Channel එකක් අනිවාර්යයි
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    channelId,
-                    "Order Notifications",
-                    NotificationManager.IMPORTANCE_HIGH // වැදගත්: මේක HIGH වෙන්න ඕනේ
-            );
-            channel.setDescription("Channel for order status updates");
+            NotificationChannel channel = new NotificationChannel(channelId, "Order Notifications", NotificationManager.IMPORTANCE_HIGH);
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(channel);
             }
         }
 
-        // Notification එක හදනවා
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(android.R.drawable.ic_dialog_info) // පරීක්ෂා කිරීමට Default icon එකක්
+                .setSmallIcon(R.drawable.logo)
                 .setContentTitle("Order Confirmed! 🎉")
-                .setContentText("Your order has been placed successfully. Thank you!")
-                .setPriority(NotificationCompat.PRIORITY_HIGH) // මේක HIGH දාන්න
-                .setDefaults(NotificationCompat.DEFAULT_ALL)   // සද්දය සහ Vibration එකට
+                .setContentText("Your order has been placed successfully. Thank you for shopping with ÉVORA!")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setAutoCancel(true);
 
         if (notificationManager != null) {

@@ -4,7 +4,8 @@ public class NotificationModel {
     private String title, body, timestamp, userId;
     private boolean read;
 
-    public NotificationModel() {} // Firestore එකට අවශ්‍යයි
+    public NotificationModel() {
+    }
 
     public NotificationModel(String title, String body, String timestamp, String userId, boolean read) {
         this.title = title;
@@ -14,9 +15,23 @@ public class NotificationModel {
         this.read = read;
     }
 
-    // Getters and Setters මෙතනට දාන්න...
-    public String getTitle() { return title; }
-    public String getBody() { return body; }
-    public String getTimestamp() { return timestamp; }
-    public boolean isRead() { return read; }
+    public String getTitle() {
+        return title;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
+    }
 }

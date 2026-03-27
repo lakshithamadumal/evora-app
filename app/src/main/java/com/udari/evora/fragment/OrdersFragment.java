@@ -56,10 +56,8 @@ public class OrdersFragment extends Fragment {
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
                     if (binding == null) return;
-//                    binding.progressBar.setVisibility(View.GONE);
 
                     if (error != null) {
-//                        Toast.makeText(getContext(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -73,9 +71,7 @@ public class OrdersFragment extends Fragment {
                         }
 
                         if (orderList.isEmpty()) {
-//                            binding.tvNoOrders.setVisibility(View.VISIBLE); // ඕඩර්ස් නැත්නම් පෙන්වන TextView එක
                         } else {
-//                            binding.tvNoOrders.setVisibility(View.GONE);
                         }
 
                         adapter.notifyDataSetChanged();
