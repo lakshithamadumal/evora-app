@@ -57,4 +57,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             this.binding = binding;
         }
     }
+
+    public void filterList(List<Product> filteredList) {
+        this.productList = filteredList;
+        notifyDataSetChanged();
+    }
 }

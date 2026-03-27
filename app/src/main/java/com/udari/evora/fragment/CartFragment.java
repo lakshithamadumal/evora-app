@@ -34,6 +34,14 @@ import lk.payhere.androidsdk.model.InitRequest;
 import lk.payhere.androidsdk.model.StatusResponse;
 import lk.payhere.androidsdk.PHConfigs;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import androidx.core.app.NotificationCompat;
+
 public class CartFragment extends Fragment implements CartAdapter.OnCartActionListener {
 
     private FragmentCartBinding binding;
@@ -178,7 +186,6 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
         order.put("items", cartItemList);
 
         WriteBatch batch = db.batch();
-
         batch.set(db.collection("Orders").document(orderId), order);
 
         for (CartItem item : cartItemList) {
@@ -188,8 +195,55 @@ public class CartFragment extends Fragment implements CartAdapter.OnCartActionLi
         }
 
         batch.commit().addOnSuccessListener(aVoid -> {
-            Toast.makeText(getContext(), "Order Placed Successfully!", Toast.LENGTH_LONG).show();
-        }).addOnFailureListener(e -> Toast.makeText(getContext(), "Error saving order: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            if (isAdded()) {
+                Toast.makeText(requireContext(), "Order Placed Successfully!", Toast.LENGTH_LONG).show();
+
+                // --- තත්පර 3 ක Delay එක මෙතන ---
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    if (isAdded()) {
+                        sendOrderConfirmationNotification();
+                    }
+                }, 3000);
+            }
+        }).addOnFailureListener(e -> {
+            if (isAdded()) {
+                Toast.makeText(requireContext(), "Error saving order: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void sendOrderConfirmationNotification() {
+        Context context = getContext();
+        if (context == null) return;
+
+        String channelId = "order_status_channel";
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Oreo (Android 8) සහ ඉහළ සඳහා Channel එකක් අනිවාර්යයි
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    channelId,
+                    "Order Notifications",
+                    NotificationManager.IMPORTANCE_HIGH // වැදගත්: මේක HIGH වෙන්න ඕනේ
+            );
+            channel.setDescription("Channel for order status updates");
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+            }
+        }
+
+        // Notification එක හදනවා
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(android.R.drawable.ic_dialog_info) // පරීක්ෂා කිරීමට Default icon එකක්
+                .setContentTitle("Order Confirmed! 🎉")
+                .setContentText("Your order has been placed successfully. Thank you!")
+                .setPriority(NotificationCompat.PRIORITY_HIGH) // මේක HIGH දාන්න
+                .setDefaults(NotificationCompat.DEFAULT_ALL)   // සද්දය සහ Vibration එකට
+                .setAutoCancel(true);
+
+        if (notificationManager != null) {
+            notificationManager.notify((int) System.currentTimeMillis(), builder.build());
+        }
     }
 
     private boolean isEmpty(String value) { return value == null || value.trim().isEmpty(); }

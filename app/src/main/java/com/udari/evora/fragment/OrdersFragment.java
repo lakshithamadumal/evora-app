@@ -59,7 +59,7 @@ public class OrdersFragment extends Fragment {
 //                    binding.progressBar.setVisibility(View.GONE);
 
                     if (error != null) {
-                        Toast.makeText(getContext(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(getContext(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
