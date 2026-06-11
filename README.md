@@ -1,4 +1,4 @@
-# 🌸 Evora perfume selling Android app
+# 🌸 Evora Perfume Selling app
 
 Evora is a modern Android perfume shopping application that allows customers to browse products, place orders, and make secure online payments.
 
